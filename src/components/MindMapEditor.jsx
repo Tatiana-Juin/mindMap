@@ -1,5 +1,5 @@
 
-import {useCallback,useState } from 'react';
+import {useCallback,useEffect } from 'react';
 import  {
   ReactFlow,
   Background,
@@ -33,6 +33,46 @@ export default function MindMapEditor() {
     const [nodes, setNodes, onNodesChange] = useNodesState(initialNodes);
     const [edges, setEdges, onEdgesChange] = useEdgesState(initialEdges);
 
+    // Mise A jour du label 
+    const onLabelChange=useCallback(
+      (id,newLabel) =>{
+        setNodes((nds) =>
+          nds.map((node)=>{
+              if(node.id === id){
+                return{
+                  ...node,
+                  data:{
+                    ...node.data,
+                    label:newLabel,
+                  },
+                };
+              }
+              return node;
+          } )
+        );
+      },
+      [setNodes]
+    );
+
+
+   useEffect(() => {
+           setNodes((nds) => 
+               nds.map(node => {
+                  //  si id === 1 et que le texte a changer alors on recupere les data et on change le label en récuperant le nouveau 
+                   if (node.id === "1" && !node.data.onLabelChange) {
+                       return {
+                           ...node,
+                           data: {
+                               ...node.data,
+                               onLabelChange: onLabelChange, 
+                           },
+                       };
+                   }
+                   return node;
+               })
+           );
+       }, [setNodes, onLabelChange]); 
+
     const addNode = useCallback(() => {
       // creation d'un nouveau node 
         const newNode = {
@@ -40,12 +80,12 @@ export default function MindMapEditor() {
             type:'custom',
             // position aleatoire de 0 a 300 px
             position: { x: Math.random() * 300, y: Math.random() * 300 },
-            data: { label: `Node ${nodes.length + 1}` },
+            data: { label: `Node ${nodes.length + 1}`,  onLabelChange: onLabelChange,},
         };
         // pour créer un nouveau tabbleau avec les ancien node et les nouveau 
         setNodes((nds) => [...nds, newNode]);
         // pour useCallback créer addNode que si nodes ou setNodes change => ameliore les performances 
-    }, [nodes, setNodes]);
+    }, [nodes, setNodes,onLabelChange]);
 
     // Pour relier les bouton les edges
     const onConnect = useCallback(
@@ -64,11 +104,14 @@ export default function MindMapEditor() {
         onConnect={onConnect}
         // ajuster la camera pour tout voir 
         fitView
-        // pour que le type soit un trait droit 
-        defaultEdgeOptions={{ type: 'straight' }}
+        // pour que le type soit un escalier 
+        defaultEdgeOptions={{ 
+          type: 'smoothstep',
+         
+        }}
         // avant la liaison on veutt que se soit droit et non en courbe 
-        connectionLineType="straight"  
-        nodeTypes={nodeTypes} // 👈 ajoute ceci
+        connectionLineType="smoothstep"  
+        nodeTypes={nodeTypes} 
       >
         
         <Controls />
