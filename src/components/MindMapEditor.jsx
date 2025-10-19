@@ -11,6 +11,7 @@ import  {
   
 } from '@xyflow/react';
 import CustomNode from './CustomNode';
+import { toPng } from 'html-to-image';
 import '@xyflow/react/dist/style.css';
 
 
@@ -79,7 +80,7 @@ export default function MindMapEditor() {
             id: (nodes.length + 1).toString(), 
             type:'custom',
             // position aleatoire de 0 a 300 px
-            position: { x: Math.random() * 300, y: Math.random() * 300 },
+            position: { x: Math.random() * 500, y: Math.random() * 500 },
             data: { label: `Node ${nodes.length + 1}`,  onLabelChange: onLabelChange,},
         };
         // pour créer un nouveau tabbleau avec les ancien node et les nouveau 
@@ -92,10 +93,35 @@ export default function MindMapEditor() {
       (params) => setEdges( (eds) => addEdge(params,eds) ),
       [setEdges]
     );
+
+     // 
+        const onExportImage = useCallback(() => {
+            // Ciblez l'élément DOM de ReactFlow 
+            const flowElement = document.querySelector('.react-flow');
+    
+            if (flowElement) {
+                
+                toPng(flowElement, {
+                    
+                    backgroundColor: '#ffffff', 
+                    // sans le bouton d'exportationet de creation de node
+                    filter: (node) => node.tagName !== 'BUTTON', 
+                }).then((dataUrl) => {
+                    // pour le telechargement
+                    const a = document.createElement('a');
+                    a.setAttribute('href', dataUrl);
+                    a.setAttribute('download', 'mindmap.png');
+                    a.click();
+                });
+            }
+        }, []); // Aucune dépendance à l'instance n'est strictement nécessaire pour html-to-image simple
   
   return (
     <div style={{ height: 700 }}>
       <button onClick={addNode}>+ Ajouter un node</button>
+        <button onClick={onExportImage} style={{ marginLeft: '10px' }}>
+              ⬇️ Exporter en image
+        </button>
       <ReactFlow
         nodes={nodes}
         edges={edges}
@@ -107,6 +133,10 @@ export default function MindMapEditor() {
         // pour que le type soit un escalier 
         defaultEdgeOptions={{ 
           type: 'smoothstep',
+          style: { 
+                  strokeWidth: 2, // Rend le trait plus visible
+                  stroke: '#222', // Une couleur foncée et explicite
+                },
          
         }}
         // avant la liaison on veutt que se soit droit et non en courbe 
